@@ -1,0 +1,29 @@
+[Unit]
+Description=share-my-colab - Controlled Google Colab Sharing Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Set User/Group to the host account that owns ~/.config/colab-cli (already logged in via `colab auth`)
+User=colab
+Group=colab
+WorkingDirectory=/opt/share-my-colab
+EnvironmentFile=-/opt/share-my-colab/.env
+ExecStart=/usr/bin/python3 /opt/share-my-colab/server.py
+
+# Allow active `colab run` jobs to cleanly release their VM on SIGTERM
+KillSignal=SIGTERM
+TimeoutStopSec=45
+
+Restart=on-failure
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+
+# Note: do not enable ProtectHome=yes, PrivateTmp=yes, or RestrictNamespaces=yes here;
+# server.py needs ~/.config/colab-cli and creates per-job bubblewrap (bwrap) user namespaces.
+
+[Install]
+WantedBy=multi-user.target

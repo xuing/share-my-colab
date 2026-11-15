@@ -1,0 +1,29 @@
+# Runtime secrets, SSH keys, logs, and local state (never commit)
+.gateway_token
+.gateway_ssh/
+*.log
+gateway.log
+.remember/
+
+# Client auto-staging and downloaded temporary outputs
+colab_tmp/
+gw_in*/
+gw_out*/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!deploy/.env.example
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# OS metadata
+.DS_Store

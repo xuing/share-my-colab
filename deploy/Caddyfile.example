@@ -1,0 +1,26 @@
+# Caddy v2 reverse proxy examples for share-my-colab.
+# Always terminate HTTPS in front of share-my-colab so Bearer tokens stay encrypted in transit.
+
+# ---------------------------------------------------------------------------
+# Option 1: Subpath deployment under https://example.com/colab/
+# ---------------------------------------------------------------------------
+example.com {
+	# Redirect bare /colab -> /colab/ so relative paths (api/*, client.py, SKILL.md) resolve cleanly.
+	redir /colab /colab/ 308
+
+	# Strip the /colab prefix before forwarding to share-my-colab.
+	handle_path /colab/* {
+		# Note: if Caddy runs inside Docker and share-my-colab runs on the host,
+		# use host.docker.internal:8790 (or the Docker bridge IP) instead of 127.0.0.1:8790.
+		reverse_proxy 127.0.0.1:8790
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Option 2: Dedicated subdomain deployment under https://colab.example.com
+# ---------------------------------------------------------------------------
+colab.example.com {
+	# Note: if Caddy runs inside Docker and share-my-colab runs on the host,
+	# use host.docker.internal:8790 (or the Docker bridge IP) instead of 127.0.0.1:8790.
+	reverse_proxy 127.0.0.1:8790
+}
