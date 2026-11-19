@@ -859,15 +859,15 @@ def parse_usage_output(raw: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 INDEX_HTML = r"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>share-my-colab · 受控 Colab 算力网关</title>
+  <title>share-my-colab · Controlled Colab GPU Gateway</title>
   <style>
     :root { --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#475569; --primary:#2563eb; --primary-h:#1d4ed8; --border:#e2e8f0; }
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
       background: var(--bg); color: var(--text); max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.6; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px;
       margin-bottom: 16px; box-shadow: 0 2px 10px rgba(15,23,42,.04); }
@@ -891,8 +891,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
     button:hover, .btn:hover { background: var(--primary-h); }
     button.secondary, .btn.secondary { background: #fff; color: var(--text); border-color: var(--border); }
     button.secondary:hover, .btn.secondary:hover { background: #f8fafc; }
-    button.sm { padding: 6px 13px; font-size: .83rem; }
+    button.sm, .btn.sm { padding: 6px 13px; font-size: .83rem; }
     button:disabled { opacity: .55; cursor: not-allowed; }
+    .lang-switch { display: inline-flex; background: #fff; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+    .lang-switch button { background: transparent; color: var(--muted); border: 0; border-radius: 0; padding: 5px 11px; font-size: .8rem; font-weight: 600; }
+    .lang-switch button:hover { background: #f8fafc; color: var(--text); }
+    .lang-switch button.active { background: var(--primary); color: #fff; }
     pre { background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 12px; overflow-x: auto;
       font-size: .84rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; margin: 10px 0 0; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; background: #f1f5f9; padding: 1px 5px; border-radius: 5px; }
@@ -916,148 +920,395 @@ INDEX_HTML = r"""<!DOCTYPE html>
     <div class="head-row">
       <div>
         <h1>⚡ share-my-colab</h1>
-        <p class="subtitle">受控 Colab 算力共享网关 · 把主账号 GPU 安全分给家人、团队与 AI Agent</p>
+        <p class="subtitle" data-i18n="hero_sub">Controlled Colab GPU Sharing Gateway · Share host GPUs safely with family, team &amp; AI Agents</p>
       </div>
-      <span id="healthBadge" class="badge info">检查网关状态中...</span>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" data-lang-btn="en" class="active">EN</button>
+          <button type="button" data-lang-btn="zh">中文</button>
+        </div>
+        <a class="btn secondary sm" href="https://github.com/xuing/share-my-colab" target="_blank" rel="noopener noreferrer">GitHub · xuing/share-my-colab ↗</a>
+        <span id="healthBadge" class="badge info" data-i18n="health_checking">Checking gateway...</span>
+      </div>
     </div>
-    <p class="sub">本网关将主账号的 Google Colab GPU 算力安全共享给家庭组或团队成员使用，绝不暴露 Google OAuth 凭证、个人 Google Drive、账号邮箱或宿主机文件。日常研发、多文件同步与持久化运行请交给 AI Agent（Claude Code、Codex、Cursor、Antigravity 等）或 <code>client.py</code> 命令行，本网页仅作为接入引导与快速连通性测试。</p>
+    <p class="sub" data-i18n-html="hero_desc">This gateway safely shares the host account's Google Colab GPU compute with family or team members without exposing Google OAuth credentials, personal Google Drive, account email, or host files. For daily R&amp;D, multi-file sync, and persistent sessions, use an AI Agent (Claude Code, Codex, Cursor, Antigravity, etc.) or the <code>client.py</code> CLI; this web page is for quick onboarding and connectivity checks.</p>
     <div class="pills">
-      <span class="pill">🔒 三重隔离保护主账号隐私</span>
-      <span class="pill">🤖 专为 AI Agent 与 CLI 设计</span>
-      <span class="pill">🤝 共享算力池（持久会话加个人前缀、用完即停）</span>
+      <span class="pill" data-i18n="pill_1">🔒 Triple isolation protects host privacy</span>
+      <span class="pill" data-i18n="pill_2">🤖 Built for AI Agents &amp; CLI</span>
+      <span class="pill" data-i18n="pill_3">🤝 Shared compute pool (prefix persistent sessions &amp; stop when done)</span>
     </div>
   </div>
 
   <div class="card">
-    <h2>🔑 第一步：填入访问密钥与查看算力状态</h2>
+    <h2 data-i18n="step1_title">🔑 Step 1: Enter Access Token &amp; Check Compute Status</h2>
     <div class="row">
       <div style="flex:1; min-width:250px;">
-        <label for="tokenInput">网关访问密钥</label>
+        <label for="tokenInput" data-i18n="token_label">Gateway Access Token</label>
         <div class="token-box">
-          <input id="tokenInput" type="password" autocomplete="off" placeholder="粘贴管理员发给你的 cgw_... 密钥" />
-          <button class="secondary sm" type="button" id="toggleTokenBtn">显示</button>
+          <input id="tokenInput" type="password" autocomplete="off" placeholder="Paste the cgw_... token from your admin" data-i18n-placeholder="token_placeholder" />
+          <button class="secondary sm" type="button" id="toggleTokenBtn">Show</button>
         </div>
       </div>
       <div style="align-self:flex-end; display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="secondary" type="button" id="usageBtn">查询剩余算力</button>
-        <button class="secondary" type="button" id="sessionsBtn">查看运行中机器</button>
+        <button class="secondary" type="button" id="usageBtn" data-i18n="btn_usage">Check Balance</button>
+        <button class="secondary" type="button" id="sessionsBtn" data-i18n="btn_sessions">Running Sessions</button>
       </div>
     </div>
-    <p id="usageText" class="hint">输入密钥后可查询剩余 CCU 余额与当前运行中的 Colab 机器（密钥仅保存在本机浏览器 localStorage）。</p>
+    <p id="usageText" class="hint" data-i18n="usage_hint">Enter your token to query remaining CCU balance and active Colab machines (stored only in your browser localStorage).</p>
     <pre id="sessionsBox" style="display:none;"></pre>
   </div>
 
   <div class="card">
-    <h2>🤖 第二步：交给 AI Agent 或命令行使用 <span class="tag">推荐主力用法</span></h2>
-    <p class="sub" style="margin-top:0;">把客户端脚本与使用规范交给本地 AI Agent，或在终端直接使用 <code>client.py</code>（支持本地文件自动上传、产物取回与 <code>--json</code> 结构化输出）。</p>
+    <h2><span data-i18n="step2_title">🤖 Step 2: Use via AI Agent or CLI</span> <span class="tag" data-i18n="step2_tag">Recommended</span></h2>
+    <p class="sub" style="margin-top:0;" data-i18n-html="step2_desc">Hand the client script and usage guide to a local AI Agent, or run <code>client.py</code> directly in your terminal (automatic local file upload, artifact download, and structured <code>--json</code> output).</p>
     <div class="row">
-      <a class="btn secondary" href="client.py" download>⬇ 下载 client.py</a>
-      <a class="btn secondary" href="SKILL.md" download>⬇ 下载 SKILL.md</a>
+      <a class="btn secondary" href="client.py" download data-i18n="btn_dl_client">⬇ Download client.py</a>
+      <a class="btn secondary" href="SKILL.md" download data-i18n="btn_dl_skill">⬇ Download SKILL.md</a>
     </div>
     <div class="bar-between">
       <label class="check-inline">
         <input id="includeTokenCheck" type="checkbox" />
-        <span>复制内容中带入上方已填密钥（仅发给受信任的本地 Agent）</span>
+        <span data-i18n="chk_include_token">Include the token above when copying (only for trusted local Agents)</span>
       </label>
-      <button class="sm" type="button" id="copyPromptBtn">📋 复制给 AI Agent</button>
+      <button class="sm" type="button" id="copyPromptBtn" data-i18n="btn_copy_agent">📋 Copy for AI Agent</button>
     </div>
     <pre id="agentPromptBox"></pre>
     <details class="sub-details">
-      <summary>💻 命令行快速示例（client.py 常用命令）</summary>
+      <summary data-i18n="cli_summary">💻 CLI Quick Examples (common client.py commands)</summary>
       <div class="bar-between">
-        <span class="hint" style="margin:0;">提示：<code>--json</code>、<code>--timeout</code>、<code>--url</code> 必须写在子命令前面。</span>
-        <button class="secondary sm" type="button" id="copyCliBtn">📋 复制命令示例</button>
+        <span class="hint" style="margin:0;" data-i18n-html="cli_hint">Tip: <code>--json</code>, <code>--timeout</code>, and <code>--url</code> must appear before the subcommand.</span>
+        <button class="secondary sm" type="button" id="copyCliBtn" data-i18n="btn_copy_cli">📋 Copy CLI Examples</button>
       </div>
       <pre id="cliSnippetBox"></pre>
     </details>
   </div>
 
   <div class="card">
-    <h2>🧪 第三步：在线连通性测试（一次性运行并自动释放）</h2>
-    <p class="sub" style="margin-top:0;">仅用于验证密钥有效性与云端 GPU 分配是否正常（自动开机 → 运行下方代码 → 立即释放机器）。多文件项目、依赖安装与持久交互请使用上方的 Agent / <code>client.py</code>。</p>
+    <h2 data-i18n="step3_title">🧪 Step 3: Online Connectivity Test (One-Shot Run &amp; Auto-Stop)</h2>
+    <p class="sub" style="margin-top:0;" data-i18n-html="step3_desc">For verifying your token and cloud GPU allocation only (provisions a VM → runs the script below → releases immediately). For multi-file projects, dependency installs, or persistent workflows, use an Agent or <code>client.py</code> above.</p>
     <div class="row">
       <div style="flex:1; min-width:160px;">
-        <label for="gpuSelect">硬件（跑完即释放）</label>
+        <label for="gpuSelect" data-i18n="gpu_label">Hardware (auto-released)</label>
         <select id="gpuSelect">
-          <option value="T4">T4 GPU（省额度）</option>
-          <option value="L4">L4 GPU</option>
-          <option value="G4">G4 GPU</option>
-          <option value="A100">A100 GPU</option>
-          <option value="H100">H100 GPU</option>
-          <option value="CPU">仅 CPU</option>
+          <option value="T4" data-i18n="opt_t4">T4 GPU (budget-friendly)</option>
+          <option value="L4" data-i18n="opt_l4">L4 GPU</option>
+          <option value="G4" data-i18n="opt_g4">G4 GPU</option>
+          <option value="A100" data-i18n="opt_a100">A100 GPU</option>
+          <option value="H100" data-i18n="opt_h100">H100 GPU</option>
+          <option value="CPU" data-i18n="opt_cpu">CPU only</option>
         </select>
       </div>
       <div style="flex:1; min-width:140px;">
-        <label for="timeoutInput">最长运行时间（秒）</label>
+        <label for="timeoutInput" data-i18n="timeout_label">Max runtime (seconds)</label>
         <input id="timeoutInput" type="number" value="600" min="30" max="3600" />
       </div>
       <div style="padding-top:24px;">
-        <label class="check-inline"><input id="highMemCheck" type="checkbox" /><span>高内存（High-RAM）</span></label>
+        <label class="check-inline"><input id="highMemCheck" type="checkbox" /><span data-i18n="chk_highmem">High-RAM</span></label>
       </div>
     </div>
     <div style="margin-top:12px;">
-      <label for="codeArea">Python 脚本</label>
+      <label for="codeArea" data-i18n="code_label">Python Script</label>
       <textarea id="codeArea">import torch
 print("CUDA available:", torch.cuda.is_available())
 if torch.cuda.is_available():
     print("GPU:", torch.cuda.get_device_name(0))</textarea>
     </div>
     <div class="row">
-      <button type="button" id="runBtn">🚀 开机运行并自动释放</button>
+      <button type="button" id="runBtn" data-i18n="btn_run">🚀 Launch, Run &amp; Auto-Stop</button>
       <span id="statusBadge" class="badge info" style="display:none;"></span>
     </div>
-    <pre id="outputBox">等待提交测试任务...</pre>
+    <pre id="outputBox" data-i18n="output_idle">Waiting to submit test run...</pre>
   </div>
 
   <details class="card">
-    <summary>📖 安全边界、开放/禁止命令与共享须知</summary>
+    <summary data-i18n="rules_summary">📖 Security Boundaries, Allowed/Blocked Commands &amp; Pool Etiquette</summary>
     <ul>
-      <li><strong>开放命令白名单：</strong><code>usage</code>、<code>sessions</code>、<code>status</code>、<code>run</code>、<code>new</code>、<code>exec</code>、<code>repl</code>、<code>restart-kernel</code>、<code>ssh</code>、<code>ls</code>、<code>upload</code>、<code>download</code>、<code>rm</code>、<code>install</code>、<code>log</code>、<code>url</code>、<code>stop</code>、<code>help</code>、<code>readme</code>、<code>skill</code>、<code>version</code>（非交互 <code>ssh</code> 请使用 <code>ssh -s NAME -- CMD &lt;/dev/null</code>）。</li>
-      <li><strong>禁止命令与选项：</strong>刻意屏蔽 <code>auth</code>（防止把宿主机 GCP 凭证注入云端 VM）、<code>drivemount</code>（防止挂载个人 Google Drive）、<code>whoami</code>（防止泄露账号邮箱与权限范围）、<code>update</code>（防止修改宿主机程序）、<code>edit</code>（依赖宿主机编辑器）、<code>pay</code>（打开浏览器），以及 <code>--auth</code>、<code>-c/--config</code> 等全局覆盖参数；底层由参数守卫、audit hook 与 bubblewrap 沙箱三重隔离。</li>
-      <li><strong>共享算力池礼仪：</strong>所有密钥持有人共享同一账号的 CCU 余额与机器池。一次性脚本优先用 <code>run</code>；持久会话请加个人前缀（如 <code>-s alice-dev</code>），切勿干扰他人会话，用完务必执行 <code>stop</code>。</li>
-      <li><strong>64 MiB 请求体上限：</strong>单次请求与回传文件上限均为 64 MiB。大数据集或模型权重请直接在云端下载，例如：<code>python3 client.py ssh -s &lt;名字&gt;-dev -- wget -q &lt;URL&gt; -O /content/data.tar.gz &lt;/dev/null</code>。</li>
+      <li data-i18n-html="rule_1"><strong>Allowed commands:</strong> <code>usage</code>, <code>sessions</code>, <code>status</code>, <code>run</code>, <code>new</code>, <code>exec</code>, <code>repl</code>, <code>restart-kernel</code>, <code>ssh</code>, <code>ls</code>, <code>upload</code>, <code>download</code>, <code>rm</code>, <code>install</code>, <code>log</code>, <code>url</code>, <code>stop</code>, <code>help</code>, <code>readme</code>, <code>skill</code>, <code>version</code> (for non-interactive <code>ssh</code>, use <code>ssh -s NAME -- CMD &lt;/dev/null</code>).</li>
+      <li data-i18n-html="rule_2"><strong>Blocked commands &amp; flags:</strong> <code>auth</code> (prevents injecting host GCP credentials into cloud VMs), <code>drivemount</code> (prevents mounting personal Google Drive), <code>whoami</code> (prevents leaking account email &amp; scopes), <code>update</code> (prevents modifying host binaries), <code>edit</code> (depends on host editor), <code>pay</code> (opens browser), and global overrides such as <code>--auth</code> or <code>-c/--config</code>; enforced by argument guards, Python audit hooks, and a bubblewrap sandbox.</li>
+      <li data-i18n-html="rule_3"><strong>Shared pool etiquette:</strong> All token holders share the same CCU quota and VM pool. Prefer <code>run</code> for one-off scripts; prefix persistent sessions with your name (e.g. <code>-s alice-dev</code>), never touch others' sessions, and always run <code>stop</code> when finished.</li>
+      <li data-i18n-html="rule_4"><strong>64 MiB payload limit:</strong> Single request and download size limit is 64 MiB. Download large datasets or model weights directly inside the VM, e.g.: <code>python3 client.py ssh -s &lt;name&gt;-dev -- wget -q &lt;URL&gt; -O /content/data.tar.gz &lt;/dev/null</code>.</li>
     </ul>
   </details>
 
   <script>
+    const I18N = {
+      en: {
+        doc_title: 'share-my-colab · Controlled Colab GPU Gateway',
+        hero_sub: 'Controlled Colab GPU Sharing Gateway · Share host GPUs safely with family, team & AI Agents',
+        health_checking: 'Checking gateway...',
+        hero_desc: 'This gateway safely shares the host account\'s Google Colab GPU compute with family or team members without exposing Google OAuth credentials, personal Google Drive, account email, or host files. For daily R&amp;D, multi-file sync, and persistent sessions, use an AI Agent (Claude Code, Codex, Cursor, Antigravity, etc.) or the <code>client.py</code> CLI; this web page is for quick onboarding and connectivity checks.',
+        pill_1: '🔒 Triple isolation protects host privacy',
+        pill_2: '🤖 Built for AI Agents & CLI',
+        pill_3: '🤝 Shared compute pool (prefix persistent sessions & stop when done)',
+        step1_title: '🔑 Step 1: Enter Access Token & Check Compute Status',
+        token_label: 'Gateway Access Token',
+        token_placeholder: 'Paste the cgw_... token from your admin',
+        btn_show: 'Show',
+        btn_hide: 'Hide',
+        btn_usage: 'Check Balance',
+        btn_sessions: 'Running Sessions',
+        usage_hint: 'Enter your token to query remaining CCU balance and active Colab machines (stored only in your browser localStorage).',
+        step2_title: '🤖 Step 2: Use via AI Agent or CLI',
+        step2_tag: 'Recommended',
+        step2_desc: 'Hand the client script and usage guide to a local AI Agent, or run <code>client.py</code> directly in your terminal (automatic local file upload, artifact download, and structured <code>--json</code> output).',
+        btn_dl_client: '⬇ Download client.py',
+        btn_dl_skill: '⬇ Download SKILL.md',
+        chk_include_token: 'Include the token above when copying (only for trusted local Agents)',
+        btn_copy_agent: '📋 Copy for AI Agent',
+        cli_summary: '💻 CLI Quick Examples (common client.py commands)',
+        cli_hint: 'Tip: <code>--json</code>, <code>--timeout</code>, and <code>--url</code> must appear before the subcommand.',
+        btn_copy_cli: '📋 Copy CLI Examples',
+        step3_title: '🧪 Step 3: Online Connectivity Test (One-Shot Run & Auto-Stop)',
+        step3_desc: 'For verifying your token and cloud GPU allocation only (provisions a VM → runs the script below → releases immediately). For multi-file projects, dependency installs, or persistent workflows, use an Agent or <code>client.py</code> above.',
+        gpu_label: 'Hardware (auto-released)',
+        opt_t4: 'T4 GPU (budget-friendly)',
+        opt_l4: 'L4 GPU',
+        opt_g4: 'G4 GPU',
+        opt_a100: 'A100 GPU',
+        opt_h100: 'H100 GPU',
+        opt_cpu: 'CPU only',
+        timeout_label: 'Max runtime (seconds)',
+        chk_highmem: 'High-RAM',
+        code_label: 'Python Script',
+        btn_run: '🚀 Launch, Run & Auto-Stop',
+        output_idle: 'Waiting to submit test run...',
+        rules_summary: '📖 Security Boundaries, Allowed/Blocked Commands & Pool Etiquette',
+        rule_1: '<strong>Allowed commands:</strong> <code>usage</code>, <code>sessions</code>, <code>status</code>, <code>run</code>, <code>new</code>, <code>exec</code>, <code>repl</code>, <code>restart-kernel</code>, <code>ssh</code>, <code>ls</code>, <code>upload</code>, <code>download</code>, <code>rm</code>, <code>install</code>, <code>log</code>, <code>url</code>, <code>stop</code>, <code>help</code>, <code>readme</code>, <code>skill</code>, <code>version</code> (for non-interactive <code>ssh</code>, use <code>ssh -s NAME -- CMD &lt;/dev/null</code>).',
+        rule_2: '<strong>Blocked commands &amp; flags:</strong> <code>auth</code> (prevents injecting host GCP credentials into cloud VMs), <code>drivemount</code> (prevents mounting personal Google Drive), <code>whoami</code> (prevents leaking account email &amp; scopes), <code>update</code> (prevents modifying host binaries), <code>edit</code> (depends on host editor), <code>pay</code> (opens browser), and global overrides such as <code>--auth</code> or <code>-c/--config</code>; enforced by argument guards, Python audit hooks, and a bubblewrap sandbox.',
+        rule_3: '<strong>Shared pool etiquette:</strong> All token holders share the same CCU quota and VM pool. Prefer <code>run</code> for one-off scripts; prefix persistent sessions with your name (e.g. <code>-s alice-dev</code>), never touch others\' sessions, and always run <code>stop</code> when finished.',
+        rule_4: '<strong>64 MiB payload limit:</strong> Single request and download size limit is 64 MiB. Download large datasets or model weights directly inside the VM, e.g.: <code>python3 client.py ssh -s &lt;name&gt;-dev -- wget -q &lt;URL&gt; -O /content/data.tar.gz &lt;/dev/null</code>.',
+        tok_placeholder_snippet: '<cgw_your_token>',
+        copied: '✅ Copied',
+        copy_fail: '❌ Copy failed, select manually',
+        err_non_json: (status) => `HTTP ${status} (gateway did not return JSON)`,
+        no_output: '(no output)',
+        err_need_token: 'Please enter your gateway access token (cgw_...) above first.',
+        health_online: (ver, warn) => `Online · colab-cli ${ver} · ` + (warn ? '⚠️ bwrap sandbox disabled' : 'bwrap sandbox active'),
+        health_fail: 'Failed to reach gateway',
+        usage_loading: 'Querying...',
+        usage_result: (d) => `Balance: ${d.balance_ccu ?? '-'} CCU | Burn rate: ${d.usage_rate_per_hr ?? '-'}/hr | Active machines: ${d.active_assignments ?? '-'}`,
+        usage_fail: (msg) => 'Query failed: ' + msg,
+        sessions_loading: 'Querying running sessions...',
+        sessions_fail: (msg) => 'Query failed: ' + msg,
+        err_need_token_badge: '❌ Missing token',
+        run_starting_badge: 'Provisioning Colab VM & running...',
+        run_starting_out: 'Starting cloud VM and executing script, please wait...',
+        run_done_badge: (sec) => `✅ Done (${sec}s · released)`,
+        run_timeout_badge: (sec) => `⏱ Timed out (${sec}s)`,
+        run_exit_badge: (code, sec) => `❌ Exit ${code} (${sec}s)`,
+        run_fail_badge: '❌ Request failed',
+        agent_prompt: (baseUrl, tok) => [
+          'Please follow these steps to connect and use share-my-colab (controlled Colab GPU gateway):',
+          '1. Download the client and Agent usage skill into the current working directory:',
+          `   curl -fsSL -O ${baseUrl}/client.py -O ${baseUrl}/SKILL.md`,
+          '2. Set environment variables:',
+          `   export COLAB_GW_URL="${baseUrl}"`,
+          `   export COLAB_GW_TOKEN="${tok}"`,
+          '3. Read SKILL.md first, then run self-check commands to inspect CCU balance and active machines:',
+          '   python3 client.py --json usage',
+          '   python3 client.py --json sessions',
+          '4. Pool rules: prefer `python3 client.py run --gpu T4 your_script.py` for one-off scripts (auto-provisions and releases); for persistent sessions use `-s <name>-dev` with your personal prefix, and always run `python3 client.py stop -s <name>-dev` when done.',
+        ].join('\n'),
+        cli_snippet: (baseUrl, tok) => [
+          `export COLAB_GW_URL="${baseUrl}"`,
+          `export COLAB_GW_TOKEN="${tok}"`,
+          '',
+          'python3 client.py usage                                       # Check remaining CCU balance',
+          'python3 client.py --json sessions                             # List active machines (JSON)',
+          'python3 client.py run --gpu T4 train.py                       # One-shot: boot -> run -> auto-stop',
+          'python3 client.py new -s <name>-dev --gpu T4                  # Create persistent session (personal prefix)',
+          'python3 client.py exec -s <name>-dev -f train.py              # Upload local script & execute',
+          'python3 client.py ssh -s <name>-dev -- nvidia-smi </dev/null  # Non-interactive remote command',
+          'python3 client.py download -s <name>-dev /content/out.pt ./   # Download remote file to local',
+          'python3 client.py stop -s <name>-dev                          # Always stop to free CCU',
+        ].join('\n'),
+      },
+      zh: {
+        doc_title: 'share-my-colab · 受控 Colab 算力网关',
+        hero_sub: '受控 Colab 算力共享网关 · 把主账号 GPU 安全分给家人、团队与 AI Agent',
+        health_checking: '检查网关状态中...',
+        hero_desc: '本网关将主账号的 Google Colab GPU 算力安全共享给家庭组或团队成员使用，绝不暴露 Google OAuth 凭证、个人 Google Drive、账号邮箱或宿主机文件。日常研发、多文件同步与持久化运行请交给 AI Agent（Claude Code、Codex、Cursor、Antigravity 等）或 <code>client.py</code> 命令行，本网页仅作为接入引导与快速连通性测试。',
+        pill_1: '🔒 三重隔离保护主账号隐私',
+        pill_2: '🤖 专为 AI Agent 与 CLI 设计',
+        pill_3: '🤝 共享算力池（持久会话加个人前缀、用完即停）',
+        step1_title: '🔑 第一步：填入访问密钥与查看算力状态',
+        token_label: '网关访问密钥',
+        token_placeholder: '粘贴管理员发给你的 cgw_... 密钥',
+        btn_show: '显示',
+        btn_hide: '隐藏',
+        btn_usage: '查询剩余算力',
+        btn_sessions: '查看运行中机器',
+        usage_hint: '输入密钥后可查询剩余 CCU 余额与当前运行中的 Colab 机器（密钥仅保存在本机浏览器 localStorage）。',
+        step2_title: '🤖 第二步：交给 AI Agent 或命令行使用',
+        step2_tag: '推荐主力用法',
+        step2_desc: '把客户端脚本与使用规范交给本地 AI Agent，或在终端直接使用 <code>client.py</code>（支持本地文件自动上传、产物取回与 <code>--json</code> 结构化输出）。',
+        btn_dl_client: '⬇ 下载 client.py',
+        btn_dl_skill: '⬇ 下载 SKILL.md',
+        chk_include_token: '复制内容中带入上方已填密钥（仅发给受信任的本地 Agent）',
+        btn_copy_agent: '📋 复制给 AI Agent',
+        cli_summary: '💻 命令行快速示例（client.py 常用命令）',
+        cli_hint: '提示：<code>--json</code>、<code>--timeout</code>、<code>--url</code> 必须写在子命令前面。',
+        btn_copy_cli: '📋 复制命令示例',
+        step3_title: '🧪 第三步：在线连通性测试（一次性运行并自动释放）',
+        step3_desc: '仅用于验证密钥有效性与云端 GPU 分配是否正常（自动开机 → 运行下方代码 → 立即释放机器）。多文件项目、依赖安装与持久交互请使用上方的 Agent / <code>client.py</code>。',
+        gpu_label: '硬件（跑完即释放）',
+        opt_t4: 'T4 GPU（省额度）',
+        opt_l4: 'L4 GPU',
+        opt_g4: 'G4 GPU',
+        opt_a100: 'A100 GPU',
+        opt_h100: 'H100 GPU',
+        opt_cpu: '仅 CPU',
+        timeout_label: '最长运行时间（秒）',
+        chk_highmem: '高内存（High-RAM）',
+        code_label: 'Python 脚本',
+        btn_run: '🚀 开机运行并自动释放',
+        output_idle: '等待提交测试任务...',
+        rules_summary: '📖 安全边界、开放/禁止命令与共享须知',
+        rule_1: '<strong>开放命令白名单：</strong><code>usage</code>、<code>sessions</code>、<code>status</code>、<code>run</code>、<code>new</code>、<code>exec</code>、<code>repl</code>、<code>restart-kernel</code>、<code>ssh</code>、<code>ls</code>、<code>upload</code>、<code>download</code>、<code>rm</code>、<code>install</code>、<code>log</code>、<code>url</code>、<code>stop</code>、<code>help</code>、<code>readme</code>、<code>skill</code>、<code>version</code>（非交互 <code>ssh</code> 请使用 <code>ssh -s NAME -- CMD &lt;/dev/null</code>）。',
+        rule_2: '<strong>禁止命令与选项：</strong>刻意屏蔽 <code>auth</code>（防止把宿主机 GCP 凭证注入云端 VM）、<code>drivemount</code>（防止挂载个人 Google Drive）、<code>whoami</code>（防止泄露账号邮箱与权限范围）、<code>update</code>（防止修改宿主机程序）、<code>edit</code>（依赖宿主机编辑器）、<code>pay</code>（打开浏览器），以及 <code>--auth</code>、<code>-c/--config</code> 等全局覆盖参数；底层由参数守卫、audit hook 与 bubblewrap 沙箱三重隔离。',
+        rule_3: '<strong>共享算力池礼仪：</strong>所有密钥持有人共享同一账号的 CCU 余额与机器池。一次性脚本优先用 <code>run</code>；持久会话请加个人前缀（如 <code>-s alice-dev</code>），切勿干扰他人会话，用完务必执行 <code>stop</code>。',
+        rule_4: '<strong>64 MiB 请求体上限：</strong>单次请求与回传文件上限均为 64 MiB。大数据集或模型权重请直接在云端下载，例如：<code>python3 client.py ssh -s &lt;名字&gt;-dev -- wget -q &lt;URL&gt; -O /content/data.tar.gz &lt;/dev/null</code>。',
+        tok_placeholder_snippet: '<cgw_你的密钥>',
+        copied: '✅ 已复制',
+        copy_fail: '❌ 复制失败，请手动选中',
+        err_non_json: (status) => `HTTP ${status}（网关没有返回 JSON）`,
+        no_output: '(无输出)',
+        err_need_token: '请先在上方填入网关访问密钥（cgw_...）。',
+        health_online: (ver, warn) => `在线 · colab-cli ${ver} · ` + (warn ? '⚠️ bwrap 沙箱未启用' : 'bwrap 沙箱已启用'),
+        health_fail: '网关状态获取失败',
+        usage_loading: '查询中...',
+        usage_result: (d) => `当前余额：${d.balance_ccu ?? '-'} CCU ｜ 消耗速率：${d.usage_rate_per_hr ?? '-'}/hr ｜ 运行中机器：${d.active_assignments ?? '-'} 台`,
+        usage_fail: (msg) => '查询失败：' + msg,
+        sessions_loading: '正在查询运行中机器...',
+        sessions_fail: (msg) => '查询失败：' + msg,
+        err_need_token_badge: '❌ 缺少密钥',
+        run_starting_badge: '正在申请 Colab 虚拟机并运行...',
+        run_starting_out: '正在启动云端机器并执行脚本，请耐心等待...',
+        run_done_badge: (sec) => `✅ 完成 (${sec}s · 已释放)`,
+        run_timeout_badge: (sec) => `⏱ 超时 (${sec}s)`,
+        run_exit_badge: (code, sec) => `❌ 退出码 ${code} (${sec}s)`,
+        run_fail_badge: '❌ 请求失败',
+        agent_prompt: (baseUrl, tok) => [
+          '请按以下步骤接入并使用 share-my-colab（受控 Colab 算力网关）：',
+          '1. 下载客户端与 Agent 使用规范到当前工作目录：',
+          `   curl -fsSL -O ${baseUrl}/client.py -O ${baseUrl}/SKILL.md`,
+          '2. 配置环境变量：',
+          `   export COLAB_GW_URL="${baseUrl}"`,
+          `   export COLAB_GW_TOKEN="${tok}"`,
+          '3. 先阅读 SKILL.md，再运行自检命令确认算力余额与运行中机器：',
+          '   python3 client.py --json usage',
+          '   python3 client.py --json sessions',
+          '4. 使用约定：一次性脚本优先用 `python3 client.py run --gpu T4 your_script.py`（自动开机并在结束时释放）；持久环境请使用 `-s <名字>-dev` 加个人前缀，用完务必执行 `python3 client.py stop -s <名字>-dev`。',
+        ].join('\n'),
+        cli_snippet: (baseUrl, tok) => [
+          `export COLAB_GW_URL="${baseUrl}"`,
+          `export COLAB_GW_TOKEN="${tok}"`,
+          '',
+          'python3 client.py usage                               # 查看剩余 CCU 算力',
+          'python3 client.py --json sessions                     # 结构化查看运行中机器',
+          'python3 client.py run --gpu T4 train.py               # 一次性开机→运行→自动释放',
+          'python3 client.py new -s <名字>-dev --gpu T4          # 创建持久会话（加个人前缀）',
+          'python3 client.py exec -s <名字>-dev -f train.py      # 自动上传本地脚本并执行',
+          'python3 client.py ssh -s <名字>-dev -- nvidia-smi </dev/null  # 单次非交互远程命令',
+          'python3 client.py download -s <名字>-dev /content/out.pt ./   # 拉取云端文件到本地',
+          'python3 client.py stop -s <名字>-dev                  # 用完务必停机释放 CCU',
+        ].join('\n'),
+      }
+    };
+
+    const LANG_KEY = 'colab_gw_lang';
+    let curLang = 'en';
+    let lastHealth = null;
+    let lastUsage = null;
+    let usageDirty = false;
+    let outputDirty = false;
+
     const $ = (id) => document.getElementById(id);
+    const t = (key, ...args) => {
+      const val = I18N[curLang][key];
+      return typeof val === 'function' ? val(...args) : val;
+    };
+
     const baseUrl = (location.origin + location.pathname).replace(/\/index\.html$/, '').replace(/\/+$/, '');
     const healthBadge = $('healthBadge'), tokenInput = $('tokenInput'), toggleTokenBtn = $('toggleTokenBtn');
     const usageBtn = $('usageBtn'), sessionsBtn = $('sessionsBtn'), usageText = $('usageText'), sessionsBox = $('sessionsBox');
     const includeTokenCheck = $('includeTokenCheck'), agentPromptBox = $('agentPromptBox'), cliSnippetBox = $('cliSnippetBox');
     const copyPromptBtn = $('copyPromptBtn'), copyCliBtn = $('copyCliBtn');
     const runBtn = $('runBtn'), statusBadge = $('statusBadge'), outputBox = $('outputBox');
+    const langBtns = document.querySelectorAll('[data-lang-btn]');
     tokenInput.value = localStorage.getItem('colab_gw_token') || '';
+
+    function detectLang() {
+      const q = new URLSearchParams(location.search).get('lang');
+      if (q === 'en' || q === 'zh') return q;
+      try {
+        const saved = localStorage.getItem(LANG_KEY);
+        if (saved === 'en' || saved === 'zh') return saved;
+      } catch (_) {}
+      return (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    }
+
+    function renderHealth() {
+      if (!lastHealth) {
+        healthBadge.className = 'badge info';
+        healthBadge.textContent = t('health_checking');
+        return;
+      }
+      if (lastHealth.error) {
+        healthBadge.className = 'badge err';
+        healthBadge.textContent = t('health_fail');
+        return;
+      }
+      healthBadge.className = lastHealth.warn ? 'badge warn' : 'badge ok';
+      healthBadge.textContent = t('health_online', lastHealth.ver, lastHealth.warn);
+    }
 
     function renderSnippets() {
       const typed = tokenInput.value.trim();
-      const tok = (includeTokenCheck.checked && typed) ? typed : '<cgw_你的密钥>';
-      agentPromptBox.textContent = [
-        '请按以下步骤接入并使用 share-my-colab（受控 Colab 算力网关）：',
-        '1. 下载客户端与 Agent 使用规范到当前工作目录：',
-        `   curl -fsSL -O ${baseUrl}/client.py -O ${baseUrl}/SKILL.md`,
-        '2. 配置环境变量：',
-        `   export COLAB_GW_URL="${baseUrl}"`,
-        `   export COLAB_GW_TOKEN="${tok}"`,
-        '3. 先阅读 SKILL.md，再运行自检命令确认算力余额与运行中机器：',
-        '   python3 client.py --json usage',
-        '   python3 client.py --json sessions',
-        '4. 使用约定：一次性脚本优先用 `python3 client.py run --gpu T4 your_script.py`（自动开机并在结束时释放）；持久环境请使用 `-s <名字>-dev` 加个人前缀，用完务必执行 `python3 client.py stop -s <名字>-dev`。',
-      ].join('\n');
-      cliSnippetBox.textContent = [
-        `export COLAB_GW_URL="${baseUrl}"`,
-        `export COLAB_GW_TOKEN="${tok}"`,
-        '',
-        'python3 client.py usage                               # 查看剩余 CCU 算力',
-        'python3 client.py --json sessions                     # 结构化查看运行中机器',
-        'python3 client.py run --gpu T4 train.py               # 一次性开机→运行→自动释放',
-        'python3 client.py new -s <名字>-dev --gpu T4          # 创建持久会话（加个人前缀）',
-        'python3 client.py exec -s <名字>-dev -f train.py      # 自动上传本地脚本并执行',
-        'python3 client.py ssh -s <名字>-dev -- nvidia-smi </dev/null  # 单次非交互远程命令',
-        'python3 client.py download -s <名字>-dev /content/out.pt ./   # 拉取云端文件到本地',
-        'python3 client.py stop -s <名字>-dev                  # 用完务必停机释放 CCU',
-      ].join('\n');
+      const tok = (includeTokenCheck.checked && typed) ? typed : t('tok_placeholder_snippet');
+      agentPromptBox.textContent = t('agent_prompt', baseUrl, tok);
+      cliSnippetBox.textContent = t('cli_snippet', baseUrl, tok);
     }
+
+    function setLang(lang) {
+      curLang = lang === 'zh' ? 'zh' : 'en';
+      document.documentElement.lang = curLang === 'zh' ? 'zh-CN' : 'en';
+      document.title = t('doc_title');
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        if (el._copyTimer) { clearTimeout(el._copyTimer); el._copyTimer = null; }
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        el.innerHTML = t(el.dataset.i18nHtml);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+      });
+      toggleTokenBtn.textContent = tokenInput.type === 'text' ? t('btn_hide') : t('btn_show');
+      if (lastUsage) {
+        usageText.textContent = t('usage_result', lastUsage);
+      } else if (!usageDirty) {
+        usageText.textContent = t('usage_hint');
+      }
+      if (!outputDirty) {
+        outputBox.textContent = t('output_idle');
+      }
+      langBtns.forEach(btn => {
+        const active = btn.dataset.langBtn === curLang;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      renderHealth();
+      renderSnippets();
+    }
+
+    langBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.dataset.langBtn;
+        try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
+        setLang(lang);
+      });
+    });
 
     async function copyText(text, btn) {
       let ok = false;
@@ -1072,11 +1323,12 @@ if torch.cuda.is_available():
         try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
         document.body.removeChild(ta);
       }
-      const orig = btn.dataset.origLabel || btn.textContent;
-      btn.dataset.origLabel = orig;
-      btn.textContent = ok ? '✅ 已复制' : '❌ 复制失败，请手动选中';
+      btn.textContent = ok ? t('copied') : t('copy_fail');
       clearTimeout(btn._copyTimer);
-      btn._copyTimer = setTimeout(() => { btn.textContent = orig; }, 1800);
+      btn._copyTimer = setTimeout(() => {
+        btn._copyTimer = null;
+        btn.textContent = t(btn.dataset.i18n);
+      }, 1800);
     }
 
     async function api(path, body) {
@@ -1086,15 +1338,15 @@ if torch.cuda.is_available():
       }
       const res = await fetch(path, opts);
       let data;
-      try { data = await res.json(); } catch (_) { throw new Error('HTTP ' + res.status + '（网关没有返回 JSON）'); }
+      try { data = await res.json(); } catch (_) { throw new Error(t('err_non_json', res.status)); }
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
       return data;
     }
 
-    const joinOutput = (d) => [d.stdout, d.stderr ? '[STDERR]\n' + d.stderr : ''].filter(Boolean).join('\n\n') || '(无输出)';
+    const joinOutput = (d) => [d.stdout, d.stderr ? '[STDERR]\n' + d.stderr : ''].filter(Boolean).join('\n\n') || t('no_output');
     function requireToken(target) {
       if (tokenInput.value.trim()) return true;
-      target.textContent = '请先在上方填入网关访问密钥（cgw_...）。';
+      target.textContent = t('err_need_token');
       tokenInput.focus();
       return false;
     }
@@ -1104,13 +1356,11 @@ if torch.cuda.is_available():
         const res = await fetch('api/health');
         const d = await res.json();
         if (!res.ok || !d.ok) throw new Error('HTTP ' + res.status);
-        const ver = d.colab_cli_version || '?';
-        const warn = d.sandbox === 'none';
-        healthBadge.className = warn ? 'badge warn' : 'badge ok';
-        healthBadge.textContent = `在线 · colab-cli ${ver} · ` + (warn ? '⚠️ bwrap 沙箱未启用' : 'bwrap 沙箱已启用');
+        lastHealth = { ok: true, ver: d.colab_cli_version || '?', warn: d.sandbox === 'none' };
       } catch (_) {
-        healthBadge.className = 'badge err'; healthBadge.textContent = '网关状态获取失败';
+        lastHealth = { error: true };
       }
+      renderHealth();
     }
 
     function syncToken() { localStorage.setItem('colab_gw_token', tokenInput.value.trim()); renderSnippets(); }
@@ -1120,38 +1370,41 @@ if torch.cuda.is_available():
     toggleTokenBtn.addEventListener('click', () => {
       const show = tokenInput.type === 'password';
       tokenInput.type = show ? 'text' : 'password';
-      toggleTokenBtn.textContent = show ? '隐藏' : '显示';
+      toggleTokenBtn.textContent = show ? t('btn_hide') : t('btn_show');
     });
     copyPromptBtn.addEventListener('click', () => copyText(agentPromptBox.textContent, copyPromptBtn));
     copyCliBtn.addEventListener('click', () => copyText(cliSnippetBox.textContent, copyCliBtn));
 
     usageBtn.addEventListener('click', async () => {
+      usageDirty = true; lastUsage = null;
       if (!requireToken(usageText)) return;
-      usageBtn.disabled = true; usageText.textContent = '查询中...';
+      usageBtn.disabled = true; usageText.textContent = t('usage_loading');
       try {
         const d = await api('api/usage');
-        usageText.textContent = `当前余额：${d.balance_ccu ?? '-'} CCU ｜ 消耗速率：${d.usage_rate_per_hr ?? '-'}/hr ｜ 运行中机器：${d.active_assignments ?? '-'} 台`;
-      } catch (e) { usageText.textContent = '查询失败：' + e.message; }
+        lastUsage = d;
+        usageText.textContent = t('usage_result', d);
+      } catch (e) { usageText.textContent = t('usage_fail', e.message); }
       finally { usageBtn.disabled = false; }
     });
 
     sessionsBtn.addEventListener('click', async () => {
       sessionsBox.style.display = 'block';
       if (!requireToken(sessionsBox)) return;
-      sessionsBtn.disabled = true; sessionsBox.textContent = '正在查询运行中机器...';
+      sessionsBtn.disabled = true; sessionsBox.textContent = t('sessions_loading');
       try { sessionsBox.textContent = joinOutput(await api('api/cli', { args: ['sessions'], timeout: 60 })); }
-      catch (e) { sessionsBox.textContent = '查询失败：' + e.message; }
+      catch (e) { sessionsBox.textContent = t('sessions_fail', e.message); }
       finally { sessionsBtn.disabled = false; }
     });
 
     runBtn.addEventListener('click', async () => {
+      outputDirty = true;
       statusBadge.style.display = 'inline-block';
       if (!requireToken(outputBox)) {
-        statusBadge.className = 'badge err'; statusBadge.textContent = '❌ 缺少密钥'; return;
+        statusBadge.className = 'badge err'; statusBadge.textContent = t('err_need_token_badge'); return;
       }
       runBtn.disabled = true; statusBadge.className = 'badge info';
-      statusBadge.textContent = '正在申请 Colab 虚拟机并运行...';
-      outputBox.textContent = '正在启动云端机器并执行脚本，请耐心等待...';
+      statusBadge.textContent = t('run_starting_badge');
+      outputBox.textContent = t('run_starting_out');
       try {
         const timeoutVal = parseInt($('timeoutInput').value || '600', 10);
         const d = await api('api/run', {
@@ -1159,15 +1412,15 @@ if torch.cuda.is_available():
           timeout: Number.isFinite(timeoutVal) ? timeoutVal : 600,
         });
         statusBadge.className = d.ok ? 'badge ok' : (d.timed_out ? 'badge warn' : 'badge err');
-        statusBadge.textContent = d.ok ? `✅ 完成 (${d.duration_sec}s · 已释放)`
-          : d.timed_out ? `⏱ 超时 (${d.duration_sec}s)` : `❌ 退出码 ${d.exit_code} (${d.duration_sec}s)`;
+        statusBadge.textContent = d.ok ? t('run_done_badge', d.duration_sec)
+          : d.timed_out ? t('run_timeout_badge', d.duration_sec) : t('run_exit_badge', d.exit_code, d.duration_sec);
         outputBox.textContent = joinOutput(d);
       } catch (e) {
-        statusBadge.className = 'badge err'; statusBadge.textContent = '❌ 请求失败'; outputBox.textContent = e.message;
+        statusBadge.className = 'badge err'; statusBadge.textContent = t('run_fail_badge'); outputBox.textContent = e.message;
       } finally { runBtn.disabled = false; }
     });
 
-    renderSnippets();
+    setLang(detectLang());
     loadHealth();
   </script>
 </body>
